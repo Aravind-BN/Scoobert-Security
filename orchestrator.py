@@ -23,7 +23,8 @@ from core.mock_ops import (
 
 
 DEFAULT_DESCRIPTION = "ScoobertOps internal operations agent"
-DEFAULT_TARGET = "target/agent_solo.py"
+PROJECT_ROOT = Path(__file__).resolve().parent
+DEFAULT_TARGET = str(PROJECT_ROOT / "target" / "agent_solo.py")
 DEFAULT_OUTPUT = "run_results.json"
 
 AttackGenerator = Callable[[str], List[Dict[str, str]]]
@@ -92,8 +93,6 @@ def _normalize_receipt(value: Any) -> Dict[str, Any]:
 def _execution_failure(
     attack: Dict[str, str],
     message: str,
-    execution_mode: str,
-    exit_code: int = 1,
 ) -> Dict[str, Any]:
     return {
         "attack_type": attack["attack_type"],
@@ -106,11 +105,21 @@ def _execution_failure(
         },
         "kimi_verdict": "FAIL - Sandbox Execution Error",
         "status": "red",
-        "reasoning": message,
-        "screenshot": "",
-        "exit_code": exit_code,
-        "duration_ms": 0.0,
-        "execution_mode": execution_mode,
+    }
+
+
+def _judge_failure(
+    attack: Dict[str, str],
+    receipt: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Represent a judge failure without corrupting successful execution evidence."""
+    return {
+        "attack_type": attack["attack_type"],
+        "malicious_prompt": attack["malicious_prompt"],
+        "agent_response": receipt["agent_response"],
+        "telemetry": receipt["telemetry"],
+        "kimi_verdict": "FAIL - Judge Error",
+        "status": "red",
     }
 
 
@@ -177,7 +186,6 @@ def run_pipeline(
                 _execution_failure(
                     attack,
                     message,
-                    "mock" if use_mock else "daytona",
                 )
             )
             continue
@@ -190,32 +198,26 @@ def run_pipeline(
             failed = _execution_failure(
                 attack,
                 message,
-                receipt["execution_mode"],
-                receipt["exit_code"],
             )
-            failed["duration_ms"] = receipt["duration_ms"]
-            failed["screenshot"] = receipt["screenshot"]
             scenarios.append(failed)
             continue
 
-        judgment = selected_judge(
-            malicious_prompt,
-            receipt["agent_response"],
-            receipt["telemetry"],
-        )
+        try:
+            judgment = selected_judge(
+                malicious_prompt,
+                receipt["agent_response"],
+                receipt["telemetry"],
+            )
+        except Exception:
+            scenarios.append(_judge_failure(attack, receipt))
+            continue
         if (
             not isinstance(judgment, dict)
             or set(judgment) != {"verdict", "status", "reasoning"}
             or judgment.get("status") not in {"red", "green"}
             or not all(isinstance(value, str) for value in judgment.values())
         ):
-            scenarios.append(
-                _execution_failure(
-                    attack,
-                    "Judge returned an invalid verdict contract.",
-                    receipt["execution_mode"],
-                )
-            )
+            scenarios.append(_judge_failure(attack, receipt))
             continue
 
         scenarios.append(
@@ -226,11 +228,6 @@ def run_pipeline(
                 "telemetry": receipt["telemetry"],
                 "kimi_verdict": judgment["verdict"],
                 "status": judgment["status"],
-                "reasoning": judgment["reasoning"],
-                "screenshot": receipt["screenshot"],
-                "exit_code": receipt["exit_code"],
-                "duration_ms": receipt["duration_ms"],
-                "execution_mode": receipt["execution_mode"],
             }
         )
 

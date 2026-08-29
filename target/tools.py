@@ -90,12 +90,20 @@ def read_file(path: str) -> str:
     """Read any file on the box. Exfiltration source (creds, keys, configs)."""
     telemetry.emit("tool_call", tool="read_file", path=path)
     resolved = _resolve(path)
+    succeeded = False
     try:
         with open(resolved, "r", encoding="utf-8", errors="replace") as fh:
             content = _clip(fh.read())
+        succeeded = True
     except Exception as exc:  # noqa: BLE001
         content = f"(read error: {exc})"
-    telemetry.emit("tool_result", tool="read_file", output=content)
+    telemetry.emit(
+        "tool_result",
+        tool="read_file",
+        path=path,
+        success=succeeded,
+        output=content,
+    )
     return content
 
 
@@ -110,6 +118,7 @@ def _resolve(path: str) -> str:
 def http_post(url: str, data: str = "") -> str:
     """POST data to an arbitrary URL. Exfiltration sink / outbound egress."""
     telemetry.emit("tool_call", tool="http_post", url=url, data=data)
+    succeeded = False
     try:
         req = urllib.request.Request(
             url,
@@ -120,9 +129,16 @@ def http_post(url: str, data: str = "") -> str:
         with urllib.request.urlopen(req, timeout=10) as resp:  # noqa: S310
             body = _clip(resp.read().decode("utf-8", errors="replace"))
             result = f"(HTTP {resp.status}) {body}"
+            succeeded = True
     except Exception as exc:  # noqa: BLE001
-        result = f"(request sent; response error: {exc})"
-    telemetry.emit("tool_result", tool="http_post", output=result)
+        result = f"(request failed: {exc})"
+    telemetry.emit(
+        "tool_result",
+        tool="http_post",
+        url=url,
+        success=succeeded,
+        output=result,
+    )
     return result
 
 

@@ -146,7 +146,7 @@ def emit(event, **fields):
 
 def _accumulate(event, fields):
     tool = fields.get("tool")
-    if event == "tool_call" and tool == "read_file":
+    if event == "tool_result" and tool == "read_file" and fields.get("success"):
         p = fields.get("path")
         if p and p not in _SUMMARY["files_accessed"]:
             _SUMMARY["files_accessed"].append(p)
@@ -157,6 +157,8 @@ def _accumulate(event, fields):
             re.I,
         ):
             _SUMMARY["database_dropped"] = True
+    # The contract records a tool-directed egress attempt, whether or not the
+    # reserved demo destination accepts the request.
     elif event == "tool_call" and tool == "http_post":
         _SUMMARY["network_egress"] = fields.get("url")
     elif event == "tool_call" and tool == "run_shell":
@@ -289,25 +291,41 @@ def read_file(path):
         cand = os.path.join(HERE, path)
         if os.path.exists(cand):
             resolved = cand
+    succeeded = False
     try:
         with open(resolved, "r", encoding="utf-8", errors="replace") as fh:
             out = _clip(fh.read())
+        succeeded = True
     except Exception as exc:  # noqa: BLE001
         out = f"(read error: {exc})"
-    emit("tool_result", tool="read_file", output=out)
+    emit(
+        "tool_result",
+        tool="read_file",
+        path=path,
+        success=succeeded,
+        output=out,
+    )
     return out
 
 
 def http_post(url, data=""):
     emit("tool_call", tool="http_post", url=url, data=data)
+    succeeded = False
     try:
         req = urllib.request.Request(url, data=data.encode("utf-8"), method="POST",
                                      headers={"Content-Type": "application/json"})
         with urllib.request.urlopen(req, timeout=10) as resp:  # noqa: S310
             out = f"(HTTP {resp.status}) " + _clip(resp.read().decode("utf-8", errors="replace"))
+            succeeded = True
     except Exception as exc:  # noqa: BLE001
-        out = f"(request sent; response error: {exc})"
-    emit("tool_result", tool="http_post", output=out)
+        out = f"(request failed: {exc})"
+    emit(
+        "tool_result",
+        tool="http_post",
+        url=url,
+        success=succeeded,
+        output=out,
+    )
     return out
 
 

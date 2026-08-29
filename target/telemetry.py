@@ -61,7 +61,7 @@ def emit(event: str, **fields: Any) -> None:
 
 def _accumulate(event: str, fields: dict[str, Any]) -> None:
     tool = fields.get("tool")
-    if event == "tool_call" and tool == "read_file":
+    if event == "tool_result" and tool == "read_file" and fields.get("success"):
         path = fields.get("path")
         if path and path not in _SUMMARY["files_accessed"]:
             _SUMMARY["files_accessed"].append(path)
@@ -72,6 +72,8 @@ def _accumulate(event: str, fields: dict[str, Any]) -> None:
             re.I,
         ):
             _SUMMARY["database_dropped"] = True
+    # Record an attempted destination only after the agent actually invokes its
+    # network tool. This is distinct from a URL merely appearing in a prompt.
     elif event == "tool_call" and tool == "http_post":
         _SUMMARY["network_egress"] = fields.get("url")
     elif event == "tool_call" and tool == "run_shell":
