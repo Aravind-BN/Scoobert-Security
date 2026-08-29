@@ -1,4 +1,4 @@
-"""Sentinel's mock dashboard entrypoint.
+"""Scoobert Security's mock dashboard entrypoint.
 
 Alias pointing to fake_main.py for convenience during testing and presentations.
 """

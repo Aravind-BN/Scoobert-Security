@@ -1,8 +1,8 @@
-"""Sentinel's self-contained mock Streamlit security assessment dashboard.
+"""Scoobert Security's self-contained mock Streamlit QA dashboard.
 
 Designed for live demonstrations, hackathon presentations, and stakeholder reviews.
 Provides rich, realistic mock datasets with interactive demo controls, preset profiles,
-live simulation playback, and full visual parity with Sentinel's production UI.
+live simulation playback, and visual parity with Scoobert Security's production UI.
 """
 
 from __future__ import annotations
@@ -69,7 +69,7 @@ _MARKDOWN_SPECIALS = re.compile(r"([\\`*_[\]{}()#+.!|>\-])")
 
 MOCK_PRESETS: Dict[str, Dict[str, Any]] = {
     "standard": {
-        "name": "Standard Benchmark (Mixed Posture · 25% Resisted)",
+        "name": "Standard QA Benchmark (Mixed Quality · 25% Passed)",
         "target_agent": "ScoobertOps internal operations agent (v1.2)",
         "description": "Default hackathon benchmark: shows typical vulnerabilities with 1 defended and 3 failed attacks.",
         "scenarios": [
@@ -127,7 +127,7 @@ MOCK_PRESETS: Dict[str, Dict[str, Any]] = {
         ],
     },
     "hardened": {
-        "name": "Hardened Enterprise Agent (Sentinel Protected · 100% Resisted)",
+        "name": "Hardened Enterprise Agent (Scoobert Security · 100% Passed)",
         "target_agent": "ScoobertOps Enterprise Agent (v2.0 Hardened)",
         "description": "Enterprise agent with robust guardrails: successfully neutralizes and refuses all adversarial vectors.",
         "scenarios": [
@@ -188,7 +188,7 @@ MOCK_PRESETS: Dict[str, Dict[str, Any]] = {
         ],
     },
     "vulnerable": {
-        "name": "Unhardened Target (Critical Exposure · 0% Resisted)",
+        "name": "Failure-Injected Fixture (Critical Issues · 0% Passed)",
         "target_agent": "ScoobertOps Legacy Prototype (v0.1 Unhardened)",
         "description": "Baseline naive LLM without defense layers: completely succumbs to all injection and exfiltration attacks.",
         "scenarios": [
@@ -249,9 +249,9 @@ MOCK_PRESETS: Dict[str, Dict[str, Any]] = {
         ],
     },
     "extended": {
-        "name": "Extended Red-Teaming Suite (8 Comprehensive Scenarios · 50% Resisted)",
+        "name": "Extended QA Suite (8 Comprehensive Scenarios · 50% Passed)",
         "target_agent": "ScoobertOps Multi-Tool Production Agent (v1.5)",
-        "description": "Comprehensive security assessment testing prompt injection, privilege escalation, SSRF, RAG poisoning, and OS command execution.",
+        "description": "Comprehensive agent-quality assessment covering instruction integrity, authorization, SSRF, RAG poisoning, and OS command execution.",
         "scenarios": [
             {
                 "attack_type": "Indirect Prompt Injection",
@@ -362,7 +362,7 @@ MOCK_PRESETS: Dict[str, Dict[str, Any]] = {
 # ==============================================================================
 
 st.set_page_config(
-    page_title="Sentinel · AI Security Report (Demo)",
+    page_title="Scoobert Security · AI Agent QA Report (Mock Demo)",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -936,27 +936,27 @@ def _finding_summary(scenario: Dict[str, Any]) -> str:
 
     if status == "green":
         return (
-            "The AI resisted this attack. The saved receipt records no unsafe "
-            "behavior, and the judge marked the response as protected."
+            "The AI passed this quality scenario. The saved receipt records no unsafe "
+            "behavior, and the evaluator accepted the response."
         )
     if status == "red" and observations:
         return "The AI " + ", ".join(observations) + ". Review the exact evidence below."
     if status == "red":
         return (
-            "The judge marked this scenario as needing attention. Review the "
+            "The evaluator marked this scenario as needing improvement. Review the "
             "verdict and response below for the exact reason."
         )
     return (
-        "This saved result is incomplete or uses an unknown status, so Sentinel "
+        "This saved result is incomplete or uses an unknown status, so Scoobert Security "
         "does not count it as protected."
     )
 
 
 def _status_details(status: str) -> Tuple[str, str]:
     if status == "green":
-        return "safe", "Resisted"
+        return "safe", "Passed"
     if status == "red":
-        return "risk", "Needs attention"
+        return "risk", "Needs improvement"
     return "review", "Needs review"
 
 
@@ -969,16 +969,16 @@ def _render_brand_and_hero() -> None:
         """
         <div class="sentinel-brand">
             <span class="sentinel-mark" aria-hidden="true">S</span>
-            <span>Sentinel</span>
-            <span class="sentinel-brand-note">AI agent security, made visible</span>
+            <span>Scoobert Security</span>
+            <span class="sentinel-brand-note">AI agent quality, made visible</span>
         </div>
         <div class="sentinel-eyebrow">
             <span class="sentinel-dot" aria-hidden="true"></span>
             Interactive Demonstration & Evaluation Mode
         </div>
-        <h1 class="sentinel-hero-title">See what your AI actually did under attack.</h1>
+        <h1 class="sentinel-hero-title">See how your AI behaves before users do.</h1>
         <p class="sentinel-hero-copy">
-            Sentinel safely challenges an AI agent with realistic tricks, watches
+            Scoobert Security exercises an AI agent with realistic edge cases, watches
             its behavior inside an isolated sandbox, and turns the evidence into
             a report anyone can understand.
         </p>
@@ -990,21 +990,21 @@ def _render_brand_and_hero() -> None:
 def _render_how_it_works() -> None:
     st.markdown(
         """
-        <div class="sentinel-flow" aria-label="How Sentinel works">
+        <div class="sentinel-flow" aria-label="How Scoobert Security works">
             <div class="sentinel-flow-step">
                 <span class="sentinel-step-number">01</span>
-                <strong>Simulate an attack</strong>
-                <span>Realistic prompts test how the AI responds to manipulation.</span>
+                <strong>Generate QA scenarios</strong>
+                <span>Realistic edge cases test reliability and policy adherence.</span>
             </div>
             <div class="sentinel-flow-step">
                 <span class="sentinel-step-number">02</span>
-                <strong>Watch real behavior</strong>
+                <strong>Observe behavior</strong>
                 <span>An isolated sandbox records file, database, and network activity.</span>
             </div>
             <div class="sentinel-flow-step">
                 <span class="sentinel-step-number">03</span>
-                <strong>Explain the evidence</strong>
-                <span>A local AI judge turns technical receipts into a clear verdict.</span>
+                <strong>Evaluate the evidence</strong>
+                <span>A local AI evaluator turns technical receipts into a clear result.</span>
             </div>
         </div>
         """,
@@ -1027,7 +1027,7 @@ def _render_metrics(counts: Dict[str, int]) -> None:
             <div class="sentinel-metric score">
                 <div class="sentinel-metric-label">Resistance rate</div>
                 <div class="sentinel-metric-value">{score_value}</div>
-                <div class="sentinel-metric-detail">Share of attacks the AI safely resisted</div>
+                <div class="sentinel-metric-detail">Share of QA scenarios completed safely</div>
             </div>
             <div class="sentinel-metric">
                 <div class="sentinel-metric-label">Scenarios tested</div>
@@ -1035,7 +1035,7 @@ def _render_metrics(counts: Dict[str, int]) -> None:
                 <div class="sentinel-metric-detail">Different adversarial techniques checked</div>
             </div>
             <div class="sentinel-metric safe">
-                <div class="sentinel-metric-label">Attacks resisted</div>
+                <div class="sentinel-metric-label">Scenarios passed</div>
                 <div class="sentinel-metric-value">{passed}</div>
                 <div class="sentinel-metric-detail">Safe responses with clean evidence</div>
             </div>
@@ -1047,10 +1047,10 @@ def _render_metrics(counts: Dict[str, int]) -> None:
         </div>
         <div class="sentinel-score-panel">
             <div class="sentinel-score-row">
-                <strong>{passed} of {total} simulated attacks resisted</strong>
+                <strong>{passed} of {total} simulated QA scenarios passed</strong>
                 <span>{failed} risk{'s' if failed != 1 else ''} detected</span>
             </div>
-            <div class="sentinel-track" role="img" aria-label="{pass_rate} percent of attacks resisted">
+            <div class="sentinel-track" role="img" aria-label="{pass_rate} percent of QA scenarios passed">
                 <div class="sentinel-track-safe" style="width: {pass_rate}%"></div>
             </div>
         </div>
@@ -1195,7 +1195,7 @@ def main() -> None:
         with control_cols[0]:
             preset_options = list(MOCK_PRESETS.keys())
             selected_preset_key = st.selectbox(
-                "Select Security Assessment Profile",
+                "Select QA Assessment Profile",
                 options=preset_options,
                 format_func=lambda k: MOCK_PRESETS[k]["name"],
                 index=0,
@@ -1223,14 +1223,14 @@ def main() -> None:
     if simulate_clicked:
         progress_placeholder = st.empty()
         with progress_placeholder.container():
-            with st.status("🚀 Running Sentinel Adversarial Assessment Pipeline...", expanded=True) as status_box:
-                st.write("1. **Nosana Attacker**: Generating categorized adversarial injection vectors...")
+            with st.status("🚀 Running Scoobert Security QA Pipeline...", expanded=True) as status_box:
+                st.write("1. **Nosana Scenario Designer**: Generating categorized QA scenarios...")
                 time.sleep(0.6)
                 st.write("2. **Daytona Sandboxes**: Provisioning isolated Linux workspaces & executing target agent...")
                 time.sleep(0.8)
                 st.write("3. **Kernel Telemetry**: Capturing filesystem modifications, SQL actions, and network egress...")
                 time.sleep(0.6)
-                st.write("4. **Kimi Judge**: Evaluating forensic receipts against deterministic security policies...")
+                st.write("4. **Kimi Evaluator**: Evaluating behavioral receipts against quality expectations...")
                 time.sleep(0.5)
                 status_box.update(label="✅ Assessment Complete! Forensic receipts compiled.", state="complete", expanded=False)
         progress_placeholder.empty()
@@ -1284,7 +1284,7 @@ def main() -> None:
             file_name="run_results.json",
             mime="application/json",
             use_container_width=True,
-            help="Download the active dataset matching Sentinel's standardized intermediate contract.",
+            help="Download the active dataset matching Scoobert Security's standardized report contract.",
         )
 
     _render_how_it_works()
@@ -1293,7 +1293,7 @@ def main() -> None:
         '<div class="sentinel-note"><strong>Demonstration Mode Active:</strong> '
         'This dashboard is displaying mock scenario benchmarks for presentation. '
         'Red indicates that the AI agent violated a security boundary or leaked data. '
-        'Green indicates the AI successfully resisted the adversarial instruction.</div>',
+        'Green indicates the AI handled the QA scenario safely.</div>',
         unsafe_allow_html=True,
     )
 
@@ -1318,8 +1318,8 @@ def main() -> None:
         options=("all", "red", "green"),
         format_func=lambda value: {
             "all": f"All tests ({counts['total']})",
-            "red": f"Needs attention ({counts['failed']})",
-            "green": f"Resisted ({counts['passed']})",
+            "red": f"Needs improvement ({counts['failed']})",
+            "green": f"Passed ({counts['passed']})",
         }[value],
         horizontal=True,
         label_visibility="collapsed",
@@ -1340,7 +1340,7 @@ def main() -> None:
     st.divider()
     st.markdown(
         '<div class="sentinel-note"><strong>Demonstration report.</strong> '
-        'Powered by Sentinel automated adversarial benchmarking engine. '
+        'Powered by the Scoobert Security AI-agent quality-assurance engine. '
         'Telemetry verified via isolated Daytona sandboxes.</div>',
         unsafe_allow_html=True,
     )

@@ -3,7 +3,7 @@
 The system prompt below is DELIBERATELY over-permissive and leaky — the kind a
 rushed team ships. It hands the model powerful tools, tells it to be maximally
 helpful, embeds a secret behind a hand-wavy guardrail, and never tells it to
-distrust content it reads. Sentinel uses these known defects as repeatable QA data.
+distrust content it reads. Scoobert Security uses these known defects as repeatable QA data.
 
 Model wiring is OpenAI-compatible, so the same code drives OpenAI, Moonshot/Kimi
 or any Nosana-hosted OpenAI-compatible endpoint by changing env vars only:

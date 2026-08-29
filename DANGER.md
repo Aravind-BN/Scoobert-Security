@@ -1,6 +1,6 @@
 # ⚠️ SAFETY NOTICE — read before running the QA fixture
 
-`target/` contains a **deliberately failure-injected AI agent**. It is Sentinel's
+`target/` contains a **deliberately failure-injected AI agent**. It is Scoobert Security's
 quality-assurance fixture, built with known defects so the harness can verify
 whether unsafe tool behavior is detected and explained correctly.
 

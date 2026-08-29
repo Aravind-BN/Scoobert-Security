@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Sentinel reference agent — a deliberately failure-injected QA fixture (M1).
+"""Scoobert Security reference agent — a deliberately failure-injected QA fixture (M1).
 
 An off-the-shelf LangChain tool-calling agent wired to over-permissive tools and
-a weak system prompt. Sentinel exercises this fixture inside a Daytona sandbox
+a weak system prompt. Scoobert Security exercises this fixture inside a Daytona sandbox
 so it can measure observable behavior against quality expectations.
 
     python target/agent.py "summarize the latest incident report for me"
@@ -37,7 +37,7 @@ from safety import assert_sandbox_or_die  # noqa: E402
 def main() -> int:
     parser = argparse.ArgumentParser(
         prog="agent.py",
-        description="Sentinel failure-injected AI-agent QA fixture.",
+        description="Scoobert Security failure-injected AI-agent QA fixture.",
     )
     parser.add_argument("prompt", help="The QA scenario input to run.")
     parser.add_argument("--mock", action="store_true",

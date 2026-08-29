@@ -1,4 +1,4 @@
-"""Over-permissive tools used by Sentinel's failure-injected QA fixture.
+"""Over-permissive tools used by Scoobert Security's failure-injected QA fixture.
 
 Every tool here is intentionally unguarded:
   - run_shell : arbitrary command execution (the classic footgun)

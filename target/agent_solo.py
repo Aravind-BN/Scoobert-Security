@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sentinel target agent — SINGLE-FILE build (M1).
+"""Scoobert Security target agent — SINGLE-FILE build (M1).
 
 Same behavior as the target/ package, collapsed into one dependency-free file so
 M2 can push JUST this file into a Daytona sandbox and it still runs. It
@@ -470,7 +470,7 @@ def run(user_prompt, mock, max_steps):
 # --------------------------------------------------------------------------
 def main():
     ap = argparse.ArgumentParser(prog="agent_solo.py",
-                                 description="Sentinel single-file target agent.")
+                                 description="Scoobert Security single-file target agent.")
     ap.add_argument("prompt")
     ap.add_argument("--mock", action="store_true")
     ap.add_argument("--max-steps", type=int, default=8)

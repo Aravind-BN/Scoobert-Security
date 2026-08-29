@@ -1,4 +1,4 @@
-"""Nosana QA-case generation and Kimi evaluation for Sentinel's M3 pipeline."""
+"""Nosana QA-case generation and Kimi evaluation for Scoobert Security's M3 pipeline."""
 
 from __future__ import annotations
 

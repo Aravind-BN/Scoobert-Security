@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run Sentinel's scenario -> sandbox -> quality-evaluation pipeline.
+"""Run Scoobert Security's scenario -> sandbox -> quality-evaluation pipeline.
 
 Mock mode is the safe, deterministic default. Live mode provisions Daytona
 sandboxes and uses the configured Nosana/local-Kimi adapters, each of which has
@@ -261,7 +261,7 @@ def write_results(results: Dict[str, Any], output_path: str = DEFAULT_OUTPUT) ->
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
-            "Run Sentinel's AI-agent quality-assurance suite and write the "
+            "Run Scoobert Security's AI-agent quality-assurance suite and write the "
             "run_results.json dashboard contract."
         )
     )
@@ -303,7 +303,7 @@ def main() -> int:
     destination = write_results(results, args.output)
     summary = results["summary"]
     print(
-        f"Sentinel complete: {summary['passed']} passed, {summary['failed']} failed "
+        f"Scoobert Security complete: {summary['passed']} passed, {summary['failed']} failed "
         f"across {summary['total_scenarios']} scenarios."
     )
     print(f"Results: {destination}")
