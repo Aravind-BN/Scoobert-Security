@@ -1,2 +1,11 @@
 .env
+
+# M1 target agent runtime artifacts
+*.py[cod]
+sandbox.db
+last_run.json
+*.jsonl
+telemetry*.log
+.venv/
+venv/
 **/__pycache__
