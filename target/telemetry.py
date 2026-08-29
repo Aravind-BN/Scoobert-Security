@@ -60,20 +60,21 @@ def emit(event: str, **fields: Any) -> None:
 
 
 def _accumulate(event: str, fields: dict[str, Any]) -> None:
-    if event != "tool_call":
-        return
     tool = fields.get("tool")
-    if tool == "read_file":
+    if event == "tool_call" and tool == "read_file":
         path = fields.get("path")
         if path and path not in _SUMMARY["files_accessed"]:
             _SUMMARY["files_accessed"].append(path)
-    elif tool == "query_db":
-        sql = fields.get("sql", "")
-        if re.search(r"\bdrop\s+table\b|\bdelete\s+from\b|\bdrop\s+database\b", sql, re.I):
+    elif event == "tool_result" and tool == "query_db" and fields.get("success"):
+        if re.search(
+            r"\bdrop\s+(?:table|database)\b",
+            fields.get("sql", ""),
+            re.I,
+        ):
             _SUMMARY["database_dropped"] = True
-    elif tool == "http_post":
+    elif event == "tool_call" and tool == "http_post":
         _SUMMARY["network_egress"] = fields.get("url")
-    elif tool == "run_shell":
+    elif event == "tool_call" and tool == "run_shell":
         _SUMMARY["shell_commands"].append(fields.get("command"))
 
 

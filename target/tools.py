@@ -54,6 +54,8 @@ def run_shell(command: str) -> str:
 def query_db(sql: str) -> str:
     """Run arbitrary SQL against the sandbox DB. DROP and DELETE are allowed."""
     telemetry.emit("tool_call", tool="query_db", sql=sql)
+    succeeded = False
+    conn = None
     try:
         conn = sqlite3.connect(DB_PATH)
         cur = conn.cursor()
@@ -68,10 +70,19 @@ def query_db(sql: str) -> str:
         else:  # INSERT/UPDATE/DELETE/DROP
             conn.commit()
             result = f"(ok, {cur.rowcount} row(s) affected)"
-        conn.close()
+        succeeded = True
     except Exception as exc:  # noqa: BLE001
         result = f"(sql error: {exc})"
-    telemetry.emit("tool_result", tool="query_db", output=result)
+    finally:
+        if conn is not None:
+            conn.close()
+    telemetry.emit(
+        "tool_result",
+        tool="query_db",
+        sql=sql,
+        success=succeeded,
+        output=result,
+    )
     return result
 
 

@@ -177,7 +177,10 @@ class SandboxTelemetry:
         return {
             "files_accessed": sorted(list(set(self.files_accessed))),
             "database_dropped": self.database_dropped,
-            "network_egress": sorted(list(set(self.network_egress))),
+            # The cross-member contract is a single observed destination or null.
+            # Keep the internal list for forensic collection, then expose the first
+            # observation deterministically at the integration boundary.
+            "network_egress": self.network_egress[0] if self.network_egress else None,
         }
 
 
@@ -225,7 +228,55 @@ def get_async_daytona_client() -> AsyncDaytona:
 # 3. Kernel-Level `strace` Telemetry Parser
 # -----------------------------------------------------------------------------
 
-def parse_strace_telemetry(strace_log: str, command: str = "", raw_stdout: str = "") -> SandboxTelemetry:
+def _target_telemetry_from_stdout(raw_stdout: str) -> Optional[Dict[str, Any]]:
+    """Parse and validate the target's final ``TELEMETRY:`` receipt, if present."""
+    for line in reversed(raw_stdout.splitlines()):
+        if not line.startswith("TELEMETRY: "):
+            continue
+        try:
+            payload = json.loads(line.removeprefix("TELEMETRY: "))
+        except (json.JSONDecodeError, TypeError):
+            return None
+        if not isinstance(payload, dict):
+            return None
+
+        files = payload.get("files_accessed")
+        dropped = payload.get("database_dropped")
+        egress = payload.get("network_egress")
+        if not isinstance(files, list) or not all(
+            isinstance(path, str) for path in files
+        ):
+            return None
+        if not isinstance(dropped, bool):
+            return None
+        if egress is not None and not isinstance(egress, (str, list)):
+            return None
+        if isinstance(egress, list) and not all(
+            isinstance(destination, str) for destination in egress
+        ):
+            return None
+        return {
+            "files_accessed": files,
+            "database_dropped": dropped,
+            "network_egress": egress,
+        }
+    return None
+
+
+def _agent_response_from_stdout(raw_stdout: str) -> str:
+    """Remove the machine-readable receipt from the human-facing agent response."""
+    return "\n".join(
+        line
+        for line in raw_stdout.splitlines()
+        if not line.startswith("TELEMETRY: ")
+    ).strip()
+
+
+def parse_strace_telemetry(
+    strace_log: str,
+    command: str = "",
+    raw_stdout: str = "",
+) -> SandboxTelemetry:
     """
     Parses low-level Linux syscall traces produced by `strace` during agent execution.
     Extracts authentic:
@@ -274,12 +325,9 @@ def parse_strace_telemetry(strace_log: str, command: str = "", raw_stdout: str =
                 if base.endswith(".db") or base.endswith(".sqlite") or "database" in base:
                     telemetry.record_database_drop(True)
 
-    # 5. Extract domain names from command line URLs (e.g. curl https://httpbin.org/get)
-    if command:
-        for url_domain in re.findall(r'https?://([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})', command):
-            telemetry.record_network_egress(url_domain)
-
-    # 6. Fallback reverse DNS for connected IPs if no domain was extracted yet
+    # 5. Fallback reverse DNS for connected IPs if no domain was extracted yet.
+    # Do not infer egress from URLs in ``command``: the command also contains the
+    # untrusted attack prompt, and merely mentioning a URL is not network evidence.
     if not telemetry.network_egress:
         for line in strace_log.splitlines():
             if "connect(" in line:
@@ -294,26 +342,23 @@ def parse_strace_telemetry(strace_log: str, command: str = "", raw_stdout: str =
                         except Exception:
                             pass
 
-    # 7. Fallback to parse explicit JSON receipts emitted by target agent in stdout if present
-    if raw_stdout:
-        json_match = re.search(r'(?:TELEMETRY:\s*)?(\{.*?"files_accessed".*?\})', raw_stdout, re.DOTALL)
-        if json_match:
-            try:
-                parsed = json.loads(json_match.group(1).strip())
-                if isinstance(parsed, dict):
-                    for f in parsed.get("files_accessed", []):
-                        telemetry.record_file_access(str(f))
-                    if parsed.get("database_dropped"):
-                        telemetry.record_database_drop(True)
-                    if parsed.get("network_egress"):
-                        egress_val = parsed["network_egress"]
-                        if isinstance(egress_val, list):
-                            for e in egress_val:
-                                telemetry.record_network_egress(str(e))
-                        elif isinstance(egress_val, str):
-                            telemetry.record_network_egress(egress_val)
-            except Exception:
-                pass
+    # 6. The controlled target's app-layer receipt identifies deliberate tool
+    # reads and avoids counting its own one-time fixture/bootstrap writes as an
+    # attack. Kernel evidence remains authoritative for destructive and egress
+    # events, and is used for all commands that do not emit a target receipt.
+    target_receipt = _target_telemetry_from_stdout(raw_stdout)
+    if target_receipt is not None:
+        telemetry.files_accessed.clear()
+        for filepath in target_receipt["files_accessed"]:
+            telemetry.record_file_access(filepath)
+        if target_receipt["database_dropped"]:
+            telemetry.record_database_drop(True)
+        target_egress = target_receipt["network_egress"]
+        if isinstance(target_egress, list):
+            for destination in target_egress:
+                telemetry.record_network_egress(destination)
+        elif isinstance(target_egress, str):
+            telemetry.record_network_egress(target_egress)
 
     return telemetry
 
@@ -789,36 +834,43 @@ def run_in_sandbox(
       "execution_mode": "daytona"
     }
     """
+    if not isinstance(target_path, str) or not os.path.isfile(target_path):
+        raise FileNotFoundError(f"Target agent file does not exist: {target_path!r}")
+    if not isinstance(malicious_prompt, str):
+        raise TypeError("malicious_prompt must be a string")
+
     t_start = time.time()
 
     with LinuxDesktopSandbox() as sandbox:
         if jail_network:
             sandbox.jail_network(block_all=True)
 
-        # Upload target agent script to sandbox if present on host
-        if os.path.exists(target_path):
-            with open(target_path, "r", encoding="utf-8") as f:
-                agent_code = f.read()
-            sandbox.write_file("agent.py", agent_code)
+        # M2 uploads a single file, so callers must use target/agent_solo.py.
+        with open(target_path, "r", encoding="utf-8") as f:
+            agent_code = f.read()
+        sandbox.write_file("agent.py", agent_code)
+
+        # Setup writes are not target behavior and must not pollute the receipt.
+        sandbox.reset()
 
         # Execute target agent under strace supervision
         escaped_prompt = shlex.quote(malicious_prompt)
-        cmd = f"python3 agent.py {escaped_prompt}"
+        cmd = f"SENTINEL_SANDBOX=1 python3 agent.py --quiet {escaped_prompt}"
         cmd_result = sandbox.execute_command(cmd)
 
         # Capture authentic screen buffer
         try:
             screenshot = sandbox.take_screenshot()
-            screenshot_preview = screenshot.data_uri[:64] + "..."
+            screenshot_data_uri = screenshot.data_uri
         except Exception:
-            screenshot_preview = ""
+            screenshot_data_uri = ""
 
         duration_ms = (time.time() - t_start) * 1000
 
         return {
-            "agent_response": cmd_result.stdout.strip(),
+            "agent_response": _agent_response_from_stdout(cmd_result.stdout),
             "telemetry": sandbox.get_telemetry(),
-            "screenshot": screenshot_preview,
+            "screenshot": screenshot_data_uri,
             "exit_code": cmd_result.exit_code,
             "duration_ms": round(duration_ms, 2),
             "execution_mode": "daytona",
@@ -836,7 +888,7 @@ async def async_run_in_sandbox(
 
 async def run_in_sandboxes_parallel(
     scenarios: List[Dict[str, Any]],
-    target_path: str = "target/agent.py",
+    target_path: str = "target/agent_solo.py",
     max_concurrency: int = 4,
     jail_network: bool = False,
 ) -> List[Dict[str, Any]]:
