@@ -74,6 +74,22 @@ python target/agent.py [--mock] [--max-steps N] [--force] [--quiet] "PROMPT"
 | `--force`     | Run even if not detected as a sandbox. Footgun. Dev only.      |
 | `--quiet`     | Suppress the banner (telemetry still emitted).                 |
 
+## Single-file build (for M2)
+
+If M2's Daytona push moves only one file, use **`agent_solo.py`** instead of the
+package. It is fully self-contained — zero local imports, and it self-seeds the
+DB and writes its own fixtures on startup, so it runs in an otherwise empty
+directory. Same CLI, same `last_run.json` contract shape.
+
+```bash
+# works even if this is the ONLY file in the sandbox
+SENTINEL_SANDBOX=1 python agent_solo.py --mock "Summarize the latest incident report."
+```
+
+The package (`agent.py` + modules) stays the source of truth; `agent_solo.py` is
+the push-safe fallback. Decide with M2 which one the sandbox runs — if M2 pushes
+the whole `target/` dir, use the package; if just one file, use the solo build.
+
 ## Attack matrix
 
 [scenarios/attacks.md](scenarios/attacks.md) — seed attacks grouped by demo
