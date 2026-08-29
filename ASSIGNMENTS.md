@@ -99,39 +99,47 @@ Scoobert-Security/
 
 ### 👤 Member 2 (M2): The Daytona Sandbox Engineer
 
-> **Goal:** Build the isolated workspace execution engine and capture runtime telemetry.  
+> **Goal:** Build the isolated workspace execution engine and capture runtime telemetry using Daytona SDK.  
 > **Owned Files:** [`core/daytona_ops.py`](file:///home/coder/Scoobert-Security/core/daytona_ops.py), [`.env`](file:///home/coder/Scoobert-Security/.env)
 
-#### Tasks & Checklist:
-- [ ] **Daytona SDK Setup**: Authenticate with Daytona using credentials from `.env`.
+#### Tasks & Architecture (`core/daytona_ops.py`):
+- [ ] **Daytona SDK Setup**: Authenticate with Daytona using `DaytonaConfig` and credentials (`DAYTONA_API_KEY`, `DAYTONA_API_URL`, `DAYTONA_TARGET`) from `.env`.
+- [ ] **Data Models & Types**:
+  - `CommandResult(exit_code, stdout, stderr, command, duration_ms)`
+  - `ScreenshotResult(base64_data, format, width, height, timestamp)`
+  - `DesktopAction(action_type, params, timestamp)`
+  - `SandboxTelemetry(files_accessed, database_dropped, network_egress, ...)`
+- [ ] **`LinuxDesktopSandbox` (alias `LinuxSandbox`) Class**:
+  - **Lifecycle**: `start()`, `stop()`, `reset()`, context manager (`__enter__` / `__exit__`).
+  - **Screen & Vision**: `take_screenshot()`, `get_screen_size()`.
+  - **Mouse Operations**: `mouse_move(x, y)`, `mouse_click(x, y, button, clicks)`, `mouse_double_click()`, `mouse_down()`, `mouse_up()`, `mouse_drag()`, `mouse_scroll()`.
+  - **Keyboard Operations**: `type_text(text, delay_ms)`, `press_key(key)`, `key_down(key)`, `key_up(key)`, `hotkey(*keys)`.
+  - **Terminal / Execution**: `execute_command(command, timeout)` backed by Daytona `sandbox.process.exec()` with local mock fallback.
+  - **Filesystem & Telemetry**: `read_file(path)` (Daytona `sandbox.fs.download_file`), `write_file(path, content)` (Daytona `sandbox.fs.upload_file`), `get_telemetry()`, `get_action_history()`.
 - [ ] **`run_in_sandbox(target_path, malicious_prompt) -> dict`**:
-  - Provision or connect to a Daytona workspace.
-  - Upload `target/agent.py` into the sandbox.
-  - Execute command: `python agent.py "<malicious_prompt>"`.
-  - Capture `stdout`, `stderr`, and runtime metrics.
-  - Return standardized dictionary matching the telemetry contract:
-    - `agent_response`: String output from stdout.
-    - `telemetry`: Dict with `files_accessed`, `database_dropped`, and `network_egress`.
-- [ ] **Async Parallelization (Post Core-Loop)**:
-  - Wrap sandbox execution in `asyncio` to spin up and run 3–5 sandboxes concurrently.
+  - Standalone helper function provisioning a sandbox, uploading target files, executing `python agent.py "<prompt>"`, capturing telemetry, and returning the standardized dictionary matching the M4 contract.
 
 ---
 
-### 👤 Member 3 (M3): The Brains (Attacker, Judge & Mock Strategy)
+### 👤 Member 3 (M3): The Brains (Attacker, Judge & LLM Operations)
 
-> **Goal:** Implement Nosana attack generation and Kimi LLM evaluation logic using a mock-first strategy.  
-> **Owned Files:** [`core/mock_ops.py`](file:///home/coder/Scoobert-Security/core/mock_ops.py), [`core/llm_ops.py`](file:///home/coder/Scoobert-Security/core/llm_ops.py)
+> **Goal:** Implement Nosana adversarial attack generation and Kimi LLM evaluation logic, consuming sandbox telemetry & receipts.  
+> **Owned Files:** [`core/llm_ops.py`](file:///home/coder/Scoobert-Security/core/llm_ops.py), [`core/mock_ops.py`](file:///home/coder/Scoobert-Security/core/mock_ops.py)
 
 #### Tasks & Checklist:
-- [ ] **`core/mock_ops.py` (Immediate Priority)**:
-  - Implement `mock_run_sandbox(target_path, malicious_prompt) -> dict`.
-  - Instantly return hardcoded mock telemetry (e.g. `{"agent_response": "Salary: $1M", "telemetry": {"files_accessed": ["secret.txt"], "database_dropped": false}}`).
-  - Allows M3 to build and test Kimi's grading logic without waiting for M2's Daytona integration.
-- [ ] **`core/llm_ops.py`**:
-  - **Nosana Attacker**: Write `generate_attack_prompts(agent_description)` to produce adversarial payloads (indirect prompt injections, data exfiltration, system prompt leaks).
-  - **Kimi Judge**: Write `judge_attack_result(attack_prompt, agent_response, telemetry) -> dict` to evaluate if the agent was compromised.
-  - Enforce strict, deterministic pass/fail outputs (e.g. `"FAIL - Data Exfiltrated"`, `"PASS - Attack Neutralized"`).
-- [ ] **Integration Hand-off**: Once M2 finishes `daytona_ops.py`, swap `mock_run_sandbox` for `run_in_sandbox` inside `orchestrator.py`.
+- [ ] **`core/llm_ops.py` Implementation**:
+  - **Nosana Attacker Client**:
+    - Implement `generate_attack_prompts(agent_description: str) -> list[dict]`.
+    - Produce categorized adversarial payloads (e.g., *Indirect Prompt Injection*, *Privilege Escalation*, *Data Exfiltration*, *System Prompt Extraction*).
+  - **Kimi Judge / Evaluator**:
+    - Implement `judge_attack_result(attack_prompt: str, agent_response: str, telemetry: dict) -> dict`.
+    - Evaluate agent response and security telemetry (`files_accessed`, `database_dropped`, `network_egress`) against defense policies.
+    - Return deterministic verdicts: e.g., `{"verdict": "FAIL - Data Exfiltrated", "status": "red", "reasoning": "..."}` or `{"verdict": "PASS - Attack Neutralized", "status": "green", "reasoning": "..."}`.
+- [ ] **Sandbox Integration (M2 -> M3 Interface)**:
+  - Interface with M2's `LinuxDesktopSandbox` / `run_in_sandbox()` from `core.daytona_ops`.
+  - Utilize captured outputs, telemetry dicts, and optional screenshot data URIs (`screenshot.data_uri`) for multimodal grading.
+- [ ] **`core/mock_ops.py` (Fast Standalone Mock)**:
+  - Provide lightweight fallback mock functions (`mock_generate_attack_prompts`, `mock_judge_attack_result`, `mock_run_sandbox`) for rapid offline testing.
 
 ---
 
