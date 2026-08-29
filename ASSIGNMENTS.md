@@ -103,20 +103,20 @@ Scoobert-Security/
 > **Owned Files:** [`core/daytona_ops.py`](file:///home/coder/Scoobert-Security/core/daytona_ops.py), [`.env`](file:///home/coder/Scoobert-Security/.env)
 
 #### Tasks & Architecture (`core/daytona_ops.py`):
-- [ ] **Daytona SDK Setup**: Authenticate with Daytona using `DaytonaConfig` and credentials (`DAYTONA_API_KEY`, `DAYTONA_API_URL`, `DAYTONA_TARGET`) from `.env`.
-- [ ] **Data Models & Types**:
+- [x] **Daytona SDK Setup**: Authenticate with Daytona using `DaytonaConfig` and credentials (`DAYTONA_API_KEY`, `DAYTONA_API_URL`, `DAYTONA_TARGET`) from `.env`.
+- [x] **Data Models & Types**:
   - `CommandResult(exit_code, stdout, stderr, command, duration_ms)`
   - `ScreenshotResult(base64_data, format, width, height, timestamp)`
   - `DesktopAction(action_type, params, timestamp)`
   - `SandboxTelemetry(files_accessed, database_dropped, network_egress, ...)`
-- [ ] **`LinuxDesktopSandbox` (alias `LinuxSandbox`) Class**:
+- [x] **`LinuxDesktopSandbox` (alias `LinuxSandbox`) Class**:
   - **Lifecycle**: `start()`, `stop()`, `reset()`, context manager (`__enter__` / `__exit__`).
   - **Screen & Vision**: `take_screenshot()`, `get_screen_size()`.
   - **Mouse Operations**: `mouse_move(x, y)`, `mouse_click(x, y, button, clicks)`, `mouse_double_click()`, `mouse_down()`, `mouse_up()`, `mouse_drag()`, `mouse_scroll()`.
   - **Keyboard Operations**: `type_text(text, delay_ms)`, `press_key(key)`, `key_down(key)`, `key_up(key)`, `hotkey(*keys)`.
   - **Terminal / Execution**: `execute_command(command, timeout)` backed by Daytona `sandbox.process.exec()` with local mock fallback.
   - **Filesystem & Telemetry**: `read_file(path)` (Daytona `sandbox.fs.download_file`), `write_file(path, content)` (Daytona `sandbox.fs.upload_file`), `get_telemetry()`, `get_action_history()`.
-- [ ] **`run_in_sandbox(target_path, malicious_prompt) -> dict`**:
+- [x] **`run_in_sandbox(target_path, malicious_prompt) -> dict`**:
   - Standalone helper function provisioning a sandbox, uploading target files, executing `python agent.py "<prompt>"`, capturing telemetry, and returning the standardized dictionary matching the M4 contract.
 
 ---
