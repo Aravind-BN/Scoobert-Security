@@ -21,7 +21,7 @@ from core.daytona_ops import LinuxDesktopSandbox
 
 def test_interactive_daytona():
     print("=" * 70)
-    print("🛡️  SENTINEL: LIVE DAYTONA SANDBOX INSPECTION SUITE")
+    print("🛡️  SCOOBERT SECURITY: LIVE DAYTONA SANDBOX INSPECTION SUITE")
     print("=" * 70)
 
     t0 = time.time()

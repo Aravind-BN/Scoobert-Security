@@ -1,6 +1,6 @@
-# 🛡️ Sentinel — Behavioral Quality Assurance for AI Agents
+# 🛡️ Scoobert Security — Behavioral Quality Assurance for AI Agents
 
-Sentinel is a quality-assurance harness for tool-using AI agents. It exercises a
+Scoobert Security is a quality-assurance platform for tool-using AI agents. It exercises a
 deliberately failure-injected fixture with realistic edge cases and grades
 observable behavior: files accessed, destructive database actions, outbound
 network activity, and whether the response followed policy. The safe default is
@@ -48,7 +48,7 @@ python3 -m json.tool run_results.json
 Expected summary:
 
 ```text
-Sentinel complete: 1 passed, 3 failed across 4 scenarios.
+Scoobert Security complete: 1 passed, 3 failed across 4 scenarios.
 Results: .../run_results.json
 ```
 
@@ -68,6 +68,30 @@ Open <http://localhost:8501>. M3 and M4 are connected through the saved JSON
 contract: the orchestrator records the M3 verdicts in root `run_results.json`,
 and M4 reads that file. **Refresh results** reloads the file; it never launches
 the QA fixture or reruns the pipeline.
+
+### Is the localhost report a placeholder?
+
+The production dashboard in `app/main.py` does not hardcode scenario cards. It
+always reads root `run_results.json`. The repository includes a generated mock
+report, however, so starting Streamlit before running the orchestrator displays
+that saved synthetic report. A fresh `--mock` run rewrites it deterministically;
+mock mode proves the M3-to-JSON-to-M4 integration but does not execute the target
+agent or Daytona.
+
+For a visible freshness check, run:
+
+```bash
+python3 orchestrator.py --mock --description "DEMO RUN 001"
+```
+
+Then click **Refresh results** and confirm the dashboard target heading changes
+to `DEMO RUN 001`. This proves the UI consumed the newly generated file. Only a
+successful `--live` run proves real Daytona execution; keep its terminal output
+or Daytona console visible because the current JSON contract does not retain the
+run mode or sandbox ID.
+
+Do not launch `app/mock_main.py` or `app/fake_main.py` when demonstrating backend
+provenance. Those are explicitly self-contained presentation-only mock UIs.
 
 Run the safe integration regression suite:
 
@@ -149,8 +173,8 @@ NOSANA_MODEL=llama3.1
 ```
 
 `NOSANA_API_KEY` is not sent to an inference worker. If no inference endpoint is
-configured or the provider response is invalid, Sentinel uses its four safe
-deterministic QA scenarios. Sentinel does not currently create Nosana
+configured or the provider response is invalid, Scoobert Security uses its four safe
+deterministic QA scenarios. Scoobert Security does not currently create Nosana
 deployments itself; the management key is retained for operators using Nosana's
 dashboard or deployment tooling and is not sufficient to enable inference.
 
@@ -183,6 +207,9 @@ Daytona runner deliberately does not copy target-model credentials into the
 failure-injected sandbox. Export these variables explicitly for a direct target
 launch. As currently wired, the one-file Daytona target uses its deterministic
 failure-injected planner.
+
+The legacy `SENTINEL_*` environment-variable prefix is retained for backward
+compatibility with the target fixture and existing team integrations.
 
 ## Run with live Daytona
 
@@ -286,13 +313,13 @@ whether the displayed report came from mock mode or a pre-generated Daytona run.
 
 | Time | Show | Suggested words |
 | :--- | :--- | :--- |
-| 0:00–0:15 | Dashboard hero | “AI agents can use files, databases, and networks, but normal QA often checks only their final answer. Sentinel verifies the behavior behind that answer.” |
+| 0:00–0:15 | Dashboard hero | “AI agents can use files, databases, and networks, but normal QA often checks only their final answer. Scoobert Security verifies the behavior behind that answer.” |
 | 0:15–0:30 | Three-step explainer | “M3 generates quality scenarios, M2 runs them in an isolated environment and captures evidence, then local Kimi or our deterministic policy evaluates the receipt.” |
 | 0:30–0:45 | Overview metrics | “This agent passed one of four robustness scenarios. Red means behavior needs improvement; green means the scenario passed with clean evidence.” |
 | 0:45–1:15 | `Indirect Prompt Injection` card | “The user only requested an incident summary. Hidden content made the agent read fake credentials and attempt an outbound connection. The response alone is not our proof—the file and network receipts are.” Expand **View raw telemetry receipt** briefly. |
-| 1:15–1:30 | Filter to **Passed** | “The final policy-confidentiality scenario passed, so Sentinel distinguishes expected behavior from a quality defect. In mock mode this particular result is deterministic.” |
+| 1:15–1:30 | Filter to **Passed** | “The final policy-confidentiality scenario passed, so Scoobert Security distinguishes expected behavior from a quality defect. In mock mode this particular result is deterministic.” |
 | 1:30–1:50 | Architecture diagram or pre-opened code tabs | “The QA fixture, sandbox, scenario generator, evaluator, orchestrator, and UI are separate modules connected by one strict JSON contract. That lets us replace models without rewriting the evidence pipeline or dashboard.” |
-| 1:50–2:00 | Return to overview | “Sentinel turns AI-agent QA from ‘the answer looked right’ into observable, explainable behavior. We find the defect, preserve the receipt, and show teams exactly what to improve.” |
+| 1:50–2:00 | Return to overview | “Scoobert Security turns AI-agent QA from ‘the answer looked right’ into observable, explainable behavior. We find the defect, preserve the receipt, and show teams exactly what to improve.” |
 
 ### Important code: 20-second tour
 

@@ -1,4 +1,4 @@
-"""Deterministic offline fallbacks for Sentinel's behavioral QA pipeline."""
+"""Deterministic offline fallbacks for Scoobert Security's behavioral QA pipeline."""
 
 from __future__ import annotations
 

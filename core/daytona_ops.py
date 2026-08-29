@@ -1,5 +1,5 @@
 """
-Sentinel: Daytona Sandbox Execution & Behavioral Telemetry Engine
+Scoobert Security: Daytona Sandbox Execution & Behavioral Telemetry Engine
 ====================================================================
 Member 2 (M2): The Daytona Sandbox Engineer
 
@@ -973,7 +973,7 @@ async def run_in_sandboxes_parallel(
 ) -> List[Dict[str, Any]]:
     """
     Executes multiple adversarial scenarios concurrently across parallel Daytona sandboxes.
-    Delivers 3-5x acceleration for the Sentinel quality-assurance pipeline.
+    Delivers 3-5x acceleration for the Scoobert Security quality-assurance pipeline.
     """
     semaphore = asyncio.Semaphore(max_concurrency)
 
@@ -996,7 +996,7 @@ async def run_in_sandboxes_parallel(
 
 if __name__ == "__main__":
     print("=" * 70)
-    print("SENTINEL: M2 DAYTONA AI-AGENT QA ENGINE")
+    print("SCOOBERT SECURITY: M2 DAYTONA AI-AGENT QA ENGINE")
     print("=" * 70)
 
     # 1. Test strace kernel telemetry parsing

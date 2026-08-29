@@ -1,4 +1,4 @@
-"""Sentinel's read-only AI-agent quality-assurance dashboard.
+"""Scoobert Security's read-only AI-agent quality-assurance dashboard.
 
 Member 4 owns this presentation layer. The dashboard intentionally reads the
 saved ``run_results.json`` contract and never starts the QA fixture or the
@@ -47,7 +47,7 @@ _MARKDOWN_SPECIALS = re.compile(r"([\\`*_[\]{}()#+.!|>\-])")
 
 
 st.set_page_config(
-    page_title="Sentinel · AI Agent QA Report",
+    page_title="Scoobert Security · AI Agent QA Report",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -635,7 +635,7 @@ def load_results(path: Path) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
     except FileNotFoundError:
         return None, "missing"
     except OSError as exc:
-        return None, f"Sentinel could not read the results file: {exc}"
+        return None, f"Scoobert Security could not read the results file: {exc}"
 
     if not raw_text.strip():
         return None, "The results file is empty."
@@ -740,7 +740,7 @@ def _finding_summary(scenario: Dict[str, Any]) -> str:
             "verdict and response below for the exact reason."
         )
     return (
-        "This saved result is incomplete or uses an unknown status, so Sentinel "
+        "This saved result is incomplete or uses an unknown status, so Scoobert Security "
         "does not count it as passed."
     )
 
@@ -758,7 +758,7 @@ def _render_brand_and_hero() -> None:
         """
         <div class="sentinel-brand">
             <span class="sentinel-mark" aria-hidden="true">S</span>
-            <span>Sentinel</span>
+            <span>Scoobert Security</span>
             <span class="sentinel-brand-note">AI agent quality, made visible</span>
         </div>
         <div class="sentinel-eyebrow">
@@ -767,7 +767,7 @@ def _render_brand_and_hero() -> None:
         </div>
         <h1 class="sentinel-hero-title">Know how your AI behaves before users do.</h1>
         <p class="sentinel-hero-copy">
-            Sentinel exercises an AI agent with realistic edge cases, watches its
+            Scoobert Security exercises an AI agent with realistic edge cases, watches its
             behavior inside an isolated environment, and turns the evidence into
             a quality report anyone can understand.
         </p>
@@ -779,7 +779,7 @@ def _render_brand_and_hero() -> None:
 def _render_how_it_works() -> None:
     st.markdown(
         """
-        <div class="sentinel-flow" aria-label="How Sentinel works">
+        <div class="sentinel-flow" aria-label="How Scoobert Security works">
             <div class="sentinel-flow-step">
                 <span class="sentinel-step-number">01</span>
                 <strong>Generate QA scenarios</strong>
@@ -1033,7 +1033,7 @@ def main() -> None:
 
     st.markdown(
         '<div class="sentinel-note"><strong>How to read this report:</strong> '
-        'Red means Sentinel found behavior that needs improvement. Green means the '
+        'Red means Scoobert Security found behavior that needs improvement. Green means the '
         'agent passed the QA scenario with clean evidence. This fixture intentionally '
         'contains quality defects, so red findings are expected—not dashboard errors.</div>',
         unsafe_allow_html=True,

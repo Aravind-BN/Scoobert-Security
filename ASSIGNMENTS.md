@@ -1,12 +1,12 @@
-# Sentinel Delivery Plan: AI Agent Quality Assurance
+# Scoobert Security Delivery Plan: AI Agent Quality Assurance
 
-> **Project Mission**: Sentinel is an automated quality-assurance framework for tool-using AI agents. It runs repeatable behavioral scenarios in an isolated environment, captures real telemetry, and turns the evidence into understandable pass/fail results.
+> **Project Mission**: Scoobert Security is an automated quality-assurance framework for tool-using AI agents. It runs repeatable behavioral scenarios in an isolated environment, captures real telemetry, and turns the evidence into understandable pass/fail results.
 
 ---
 
 ## 1. Technical Overview & Architectural Pipeline
 
-Sentinel executes in a **five-stage modular pipeline** that decouples the QA fixture, sandbox execution, scenario generation, evaluation, and frontend presentation:
+Scoobert Security executes in a **five-stage modular pipeline** that decouples the QA fixture, sandbox execution, scenario generation, evaluation, and frontend presentation:
 
 ```mermaid
 graph LR

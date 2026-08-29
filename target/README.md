@@ -2,9 +2,9 @@
 
 > ⚠️ **Deliberately failure-injected.** Read [../DANGER.md](../DANGER.md) first. Sandbox only.
 
-The reference **QA fixture** for Project Sentinel. It is an off-the-shelf
+The reference **QA fixture** for Scoobert Security. It is an off-the-shelf
 LangChain tool-calling agent with intentionally weak permissions and an
-over-permissive system prompt. Sentinel exercises it inside isolated Daytona
+over-permissive system prompt. Scoobert Security exercises it inside isolated Daytona
 sandboxes and records actual behavior — files opened, SQL run, commands spawned,
 and data sent out.
 
