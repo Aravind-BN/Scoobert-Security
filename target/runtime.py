@@ -189,9 +189,9 @@ def _mock_answer(steps: list[dict]) -> str:
 
 
 def _evidence(steps: list[dict]) -> str:
-    """Surface what was leaked/destroyed so a judge reading the reply has signal.
+    """Surface known defects so an evaluator reading the reply has signal.
 
-    A real LLM would echo this; the mock must too, or a DB/shell compromise looks
+    A real LLM would echo this; the mock must too, or a DB/shell quality failure looks
     identical to a clean run once it is reduced to the 3-field contract telemetry.
     """
     blob = "\n".join(str(s["output"]) for s in steps)

@@ -4,8 +4,8 @@ The target agent is SUPPOSED to be dangerous — that is the point. But while
 building it we run it on our own machines. This guard refuses to run unless it
 detects a sandbox/container, or the operator passes --force.
 
-This is NOT a demo security control. Inside Daytona the sandbox markers are
-present, so the agent runs freely and the exploits land. It only exists to stop
+This is NOT a production safety control. Inside Daytona the sandbox markers are
+present, so the fixture runs freely and its known defects remain observable. It only exists to stop
 an accidental `os.system("rm -rf ~")` on a dev laptop.
 """
 from __future__ import annotations

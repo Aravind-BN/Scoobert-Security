@@ -25,7 +25,7 @@ from typing import Any
 _SESSION = os.environ.get("SENTINEL_SESSION", str(int(time.time())))
 _TELEMETRY_FILE = os.environ.get("SENTINEL_TELEMETRY")
 
-# Tools whose use means "a compromised agent did something it shouldn't".
+# Tools whose use can expose a behavioral quality defect in this fixture.
 DANGEROUS = {"run_shell", "query_db", "read_file", "http_post"}
 
 # Rolling summary in the contract shape M2/M3/M4 agreed on.

@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Sentinel target agent — a DELIBERATELY VULNERABLE AI agent (M1).
+"""Sentinel reference agent — a deliberately failure-injected QA fixture (M1).
 
-The red-team target for Project Sentinel. An off-the-shelf LangChain
-tool-calling agent wired to genuinely dangerous tools behind a sloppy,
-over-permissive system prompt. Sentinel attacks THIS inside a Daytona sandbox
-so we can observe what a compromised agent actually does.
+An off-the-shelf LangChain tool-calling agent wired to over-permissive tools and
+a weak system prompt. Sentinel exercises this fixture inside a Daytona sandbox
+so it can measure observable behavior against quality expectations.
 
     python target/agent.py "summarize the latest incident report for me"
     python target/agent.py --mock "drop the employees table"
@@ -38,9 +37,9 @@ from safety import assert_sandbox_or_die  # noqa: E402
 def main() -> int:
     parser = argparse.ArgumentParser(
         prog="agent.py",
-        description="Sentinel deliberately-vulnerable target agent.",
+        description="Sentinel failure-injected AI-agent QA fixture.",
     )
-    parser.add_argument("prompt", help="The user (or attacker) instruction to run.")
+    parser.add_argument("prompt", help="The QA scenario input to run.")
     parser.add_argument("--mock", action="store_true",
                         help="Deterministic planner, no LLM/API calls.")
     parser.add_argument("--max-steps", type=int, default=8,

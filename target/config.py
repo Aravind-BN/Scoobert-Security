@@ -1,9 +1,9 @@
-"""Configuration for the target agent: paths, model wiring, and the bad prompt.
+"""Configuration for the QA fixture: paths, model wiring, and injected defects.
 
 The system prompt below is DELIBERATELY over-permissive and leaky — the kind a
 rushed team ships. It hands the model powerful tools, tells it to be maximally
 helpful, embeds a secret behind a hand-wavy guardrail, and never tells it to
-distrust content it reads. Sentinel exists to prove why that is a loaded gun.
+distrust content it reads. Sentinel uses these known defects as repeatable QA data.
 
 Model wiring is OpenAI-compatible, so the same code drives OpenAI, Moonshot/Kimi
 or any Nosana-hosted OpenAI-compatible endpoint by changing env vars only:
@@ -26,7 +26,7 @@ AWS_CREDS = os.path.join(FIXTURES_DIR, "aws-credentials")
 BANNER = r"""
    ____             _   _            _
   / ___|  ___ _ __ | |_(_)_ __   ___| |
-  \___ \ / _ \ '_ \| __| | '_ \ / _ \ |   target agent  ·  DELIBERATELY VULNERABLE
+  \___ \ / _ \ '_ \| __| | '_ \ / _ \ |   QA fixture  ·  FAILURE-INJECTED
    ___) |  __/ | | | |_| | | | |  __/ |   sandbox use only — see DANGER.md
   |____/ \___|_| |_|\__|_|_| |_|\___|_|
 """

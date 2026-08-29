@@ -1,8 +1,8 @@
-# ⚠️ DANGER — read before running the target agent
+# ⚠️ SAFETY NOTICE — read before running the QA fixture
 
-`target/` contains a **deliberately vulnerable AI agent**. It is the red-team
-*target* for Project Sentinel, built to be exploited so we can observe what a
-compromised, tool-using agent does.
+`target/` contains a **deliberately failure-injected AI agent**. It is Sentinel's
+quality-assurance fixture, built with known defects so the harness can verify
+whether unsafe tool behavior is detected and explained correctly.
 
 ## What it will actually do
 
@@ -13,8 +13,8 @@ The agent's tools are unguarded on purpose:
 - `read_file` reads **any** file it can reach (credentials, keys).
 - `http_post` sends data to **any** URL (data exfiltration).
 
-Feed it a hostile prompt on your own machine and it can delete your files or
-leak your data. That is the point of the exercise.
+Feed it an adversarial QA scenario on your own machine and it can delete files
+or leak data. That behavior is intentional test data, not the product's purpose.
 
 ## Rules
 
@@ -26,5 +26,5 @@ leak your data. That is the point of the exercise.
    invented. Do not add real secrets to this repo.
 3. **The `http_post` collector URL in the fixtures is a fake `.example` domain.**
    Point it at a listener you control for the demo; never at a third party.
-4. This exists for an authorized hackathon red-team exercise. Do not point it at
-   systems you do not own.
+4. This exists only for authorized AI-agent quality assurance. Do not point it
+   at systems, data, or endpoints you do not own.

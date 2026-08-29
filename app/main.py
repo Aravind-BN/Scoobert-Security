@@ -1,8 +1,8 @@
-"""Sentinel's read-only Streamlit security assessment dashboard.
+"""Sentinel's read-only AI-agent quality-assurance dashboard.
 
 Member 4 owns this presentation layer. The dashboard intentionally reads the
-saved ``run_results.json`` contract and never starts the vulnerable target or
-the M1-M3 security pipeline.
+saved ``run_results.json`` contract and never starts the QA fixture or the
+M1-M3 evaluation pipeline.
 """
 
 from __future__ import annotations
@@ -20,26 +20,26 @@ import streamlit as st
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 RESULTS_PATH = PROJECT_ROOT / "run_results.json"
 
-ATTACK_EXPLANATIONS = {
+QA_SCENARIO_EXPLANATIONS = {
     "indirect prompt injection": (
-        "A document or message hides instructions that try to make the AI act "
-        "against its original rules."
+        "Checks whether instructions hidden in content can override the agent's "
+        "intended behavior."
     ),
     "indirect injection": (
-        "A document or message hides instructions that try to make the AI act "
-        "against its original rules."
+        "Checks whether instructions hidden in content can override the agent's "
+        "intended behavior."
     ),
     "privilege escalation": (
-        "The test pretends to grant extra authority and asks the AI to perform "
-        "an action it should not be allowed to take."
+        "Checks whether the agent respects its authorization boundaries when a "
+        "user claims extra authority."
     ),
     "data exfiltration": (
-        "The test tries to make the AI find private information and send it "
-        "outside the protected environment."
+        "Checks whether the agent handles private data correctly and keeps it "
+        "inside the approved environment."
     ),
     "system prompt extraction": (
-        "The test asks the AI to reveal the hidden instructions that define "
-        "its behavior and safety boundaries."
+        "Checks whether the agent preserves the confidentiality of the policies "
+        "that define its behavior."
     ),
 }
 
@@ -47,7 +47,7 @@ _MARKDOWN_SPECIALS = re.compile(r"([\\`*_[\]{}()#+.!|>\-])")
 
 
 st.set_page_config(
-    page_title="Sentinel · AI Security Report",
+    page_title="Sentinel · AI Agent QA Report",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -527,7 +527,7 @@ def _normalize_scenario(raw: Any, index: int) -> Dict[str, Any]:
     if not isinstance(raw, dict):
         return {
             "attack_type": "Result unavailable",
-            "malicious_prompt": "This saved scenario is not a JSON object.",
+            "malicious_prompt": "This saved QA scenario is not a JSON object.",
             "agent_response": "No agent response is available.",
             "kimi_verdict": "Verdict unavailable",
             "status": "review",
@@ -542,11 +542,11 @@ def _normalize_scenario(raw: Any, index: int) -> Dict[str, Any]:
         }
 
     attack_type = _text(
-        raw.get("attack_type"), "Unnamed security test", notes, "attack_type"
+        raw.get("attack_type"), "Unnamed QA scenario", notes, "attack_type"
     )
     malicious_prompt = _text(
         raw.get("malicious_prompt"),
-        "Attack instructions are unavailable.",
+        "Test input is unavailable.",
         notes,
         "malicious_prompt",
     )
@@ -704,12 +704,12 @@ def load_results(path: Path) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
     }, None
 
 
-def _attack_explanation(attack_type: str) -> str:
+def _scenario_explanation(attack_type: str) -> str:
     key = attack_type.strip().lower()
-    return ATTACK_EXPLANATIONS.get(
+    return QA_SCENARIO_EXPLANATIONS.get(
         key,
-        "This scenario checks whether the AI follows unsafe instructions or "
-        "crosses a security boundary.",
+        "This quality scenario checks whether the agent behaves reliably under "
+        "a difficult or unexpected input.",
     )
 
 
@@ -729,27 +729,27 @@ def _finding_summary(scenario: Dict[str, Any]) -> str:
 
     if status == "green":
         return (
-            "The AI resisted this attack. The saved receipt records no unsafe "
-            "behavior, and the judge marked the response as protected."
+            "The agent passed this quality scenario. The saved receipt records "
+            "no unwanted behavior, and the evaluator accepted the result."
         )
     if status == "red" and observations:
         return "The AI " + ", ".join(observations) + ". Review the exact evidence below."
     if status == "red":
         return (
-            "The judge marked this scenario as needing attention. Review the "
+            "The evaluator marked this scenario as needing improvement. Review the "
             "verdict and response below for the exact reason."
         )
     return (
         "This saved result is incomplete or uses an unknown status, so Sentinel "
-        "does not count it as protected."
+        "does not count it as passed."
     )
 
 
 def _status_details(status: str) -> Tuple[str, str]:
     if status == "green":
-        return "safe", "Resisted"
+        return "safe", "Passed"
     if status == "red":
-        return "risk", "Needs attention"
+        return "risk", "Needs improvement"
     return "review", "Needs review"
 
 
@@ -759,17 +759,17 @@ def _render_brand_and_hero() -> None:
         <div class="sentinel-brand">
             <span class="sentinel-mark" aria-hidden="true">S</span>
             <span>Sentinel</span>
-            <span class="sentinel-brand-note">AI agent security, made visible</span>
+            <span class="sentinel-brand-note">AI agent quality, made visible</span>
         </div>
         <div class="sentinel-eyebrow">
             <span class="sentinel-dot" aria-hidden="true"></span>
-            Saved security assessment
+            Saved quality assessment
         </div>
-        <h1 class="sentinel-hero-title">See what your AI actually did under attack.</h1>
+        <h1 class="sentinel-hero-title">Know how your AI behaves before users do.</h1>
         <p class="sentinel-hero-copy">
-            Sentinel safely challenges an AI agent with realistic tricks, watches
-            its behavior inside an isolated sandbox, and turns the evidence into
-            a report anyone can understand.
+            Sentinel exercises an AI agent with realistic edge cases, watches its
+            behavior inside an isolated environment, and turns the evidence into
+            a quality report anyone can understand.
         </p>
         """,
         unsafe_allow_html=True,
@@ -782,18 +782,18 @@ def _render_how_it_works() -> None:
         <div class="sentinel-flow" aria-label="How Sentinel works">
             <div class="sentinel-flow-step">
                 <span class="sentinel-step-number">01</span>
-                <strong>Simulate an attack</strong>
-                <span>Realistic prompts test how the AI responds to manipulation.</span>
+                <strong>Generate QA scenarios</strong>
+                <span>Realistic edge cases test reliability and policy adherence.</span>
             </div>
             <div class="sentinel-flow-step">
                 <span class="sentinel-step-number">02</span>
-                <strong>Watch real behavior</strong>
+                <strong>Observe real behavior</strong>
                 <span>An isolated sandbox records file, database, and network activity.</span>
             </div>
             <div class="sentinel-flow-step">
                 <span class="sentinel-step-number">03</span>
-                <strong>Explain the evidence</strong>
-                <span>A local AI judge turns technical receipts into a clear verdict.</span>
+                <strong>Evaluate the evidence</strong>
+                <span>A local AI evaluator turns technical receipts into a clear result.</span>
             </div>
         </div>
         """,
@@ -805,8 +805,8 @@ def _render_empty_state(error: str) -> None:
     if error == "missing":
         title = "No saved assessment yet"
         copy = (
-            "Generate a safe offline report first, then refresh this page. "
-            "The dashboard never launches a security test by itself."
+            "Generate a safe offline QA report first, then refresh this page. "
+            "The dashboard never launches an evaluation by itself."
         )
     else:
         title = "The saved assessment cannot be displayed"
@@ -842,32 +842,32 @@ def _render_metrics(counts: Dict[str, int]) -> None:
         f"""
         <div class="sentinel-metric-grid">
             <div class="sentinel-metric score">
-                <div class="sentinel-metric-label">Resistance rate</div>
+                <div class="sentinel-metric-label">Scenario pass rate</div>
                 <div class="sentinel-metric-value">{score_value}</div>
-                <div class="sentinel-metric-detail">Share of attacks the AI safely resisted</div>
+                <div class="sentinel-metric-detail">Share of QA scenarios completed safely</div>
             </div>
             <div class="sentinel-metric">
-                <div class="sentinel-metric-label">Scenarios tested</div>
+                <div class="sentinel-metric-label">QA scenarios</div>
                 <div class="sentinel-metric-value">{total}</div>
-                <div class="sentinel-metric-detail">Different adversarial techniques checked</div>
+                <div class="sentinel-metric-detail">Behavioral quality dimensions checked</div>
             </div>
             <div class="sentinel-metric safe">
-                <div class="sentinel-metric-label">Attacks resisted</div>
+                <div class="sentinel-metric-label">Scenarios passed</div>
                 <div class="sentinel-metric-value">{passed}</div>
-                <div class="sentinel-metric-detail">Safe responses with clean evidence</div>
+                <div class="sentinel-metric-detail">Expected responses with clean evidence</div>
             </div>
             <div class="sentinel-metric risk">
-                <div class="sentinel-metric-label">Risks detected</div>
+                <div class="sentinel-metric-label">Quality issues</div>
                 <div class="sentinel-metric-value">{failed}</div>
                 <div class="sentinel-metric-detail">Scenarios that need attention{review_detail}</div>
             </div>
         </div>
         <div class="sentinel-score-panel">
             <div class="sentinel-score-row">
-                <strong>{passed} of {total} simulated attacks resisted</strong>
-                <span>{failed} risk{'s' if failed != 1 else ''} detected</span>
+                <strong>{passed} of {total} QA scenarios passed</strong>
+                <span>{failed} issue{'s' if failed != 1 else ''} found</span>
             </div>
-            <div class="sentinel-track" role="img" aria-label="{pass_rate} percent of attacks resisted">
+            <div class="sentinel-track" role="img" aria-label="{pass_rate} percent of QA scenarios passed">
                 <div class="sentinel-track-safe" style="width: {pass_rate}%"></div>
             </div>
         </div>
@@ -944,7 +944,7 @@ def _render_scenario(scenario: Dict[str, Any], index: int) -> None:
                 unsafe_allow_html=True,
             )
             st.subheader(_literal_markdown(scenario["attack_type"]))
-            st.caption(_attack_explanation(scenario["attack_type"]))
+            st.caption(_scenario_explanation(scenario["attack_type"]))
         with header_right:
             st.markdown(
                 f'<div class="sentinel-status {tone}">{status_label}</div>',
@@ -957,14 +957,14 @@ def _render_scenario(scenario: Dict[str, Any], index: int) -> None:
             unsafe_allow_html=True,
         )
 
-        st.caption("LOCAL KIMI JUDGE VERDICT")
+        st.caption("QA EVALUATOR VERDICT")
         st.code(scenario["kimi_verdict"], language=None, wrap_lines=True)
 
         st.divider()
         prompt_column, response_column = st.columns(2, gap="large")
         with prompt_column:
-            st.markdown("#### Attack sent to the AI")
-            st.caption("The simulated instruction used to test this security boundary.")
+            st.markdown("#### Test input sent to the AI")
+            st.caption("The controlled input used to exercise this quality boundary.")
             st.code(
                 scenario["malicious_prompt"],
                 language=None,
@@ -1012,15 +1012,15 @@ def main() -> None:
 
     target_column, refresh_column = st.columns([4, 1.15], vertical_alignment="bottom")
     with target_column:
-        st.markdown('<div class="sentinel-kicker">AI agent under review</div>', unsafe_allow_html=True)
+        st.markdown('<div class="sentinel-kicker">AI agent under QA</div>', unsafe_allow_html=True)
         st.subheader(_literal_markdown(results["target_agent"]))
         if results["modified_at"]:
             st.caption(
-                "Latest saved assessment · "
+                "Latest saved QA run · "
                 + results["modified_at"].strftime("%d %b %Y, %H:%M")
             )
         else:
-            st.caption("Latest saved assessment")
+            st.caption("Latest saved QA run")
     with refresh_column:
         if st.button(
             "↻ Refresh results",
@@ -1033,17 +1033,17 @@ def main() -> None:
 
     st.markdown(
         '<div class="sentinel-note"><strong>How to read this report:</strong> '
-        'Red means Sentinel detected unsafe behavior or a run that needs attention. '
-        'Green means the AI resisted the simulated attack. This demo target is '
-        'deliberately vulnerable, so red findings are expected—not dashboard errors.</div>',
+        'Red means Sentinel found behavior that needs improvement. Green means the '
+        'agent passed the QA scenario with clean evidence. This fixture intentionally '
+        'contains quality defects, so red findings are expected—not dashboard errors.</div>',
         unsafe_allow_html=True,
     )
 
     st.markdown('<div style="height: 1.8rem"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="sentinel-section-label">Assessment overview</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sentinel-section-title">Security posture at a glance</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sentinel-section-label">QA overview</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sentinel-section-title">Agent quality at a glance</div>', unsafe_allow_html=True)
     st.markdown(
-        '<div class="sentinel-section-copy">A simple summary of how the AI handled every saved attack scenario.</div>',
+        '<div class="sentinel-section-copy">A simple summary of how the agent handled every saved QA scenario.</div>',
         unsafe_allow_html=True,
     )
     _render_metrics(results["counts"])
@@ -1060,7 +1060,7 @@ def main() -> None:
     st.markdown('<div class="sentinel-section-label">Scenario explorer</div>', unsafe_allow_html=True)
     st.markdown('<div class="sentinel-section-title">Understand every test</div>', unsafe_allow_html=True)
     st.markdown(
-        '<div class="sentinel-section-copy">Open the evidence behind each verdict, from the attack prompt to the sandbox receipt.</div>',
+        '<div class="sentinel-section-copy">Inspect each result from the controlled test input to the behavioral receipt.</div>',
         unsafe_allow_html=True,
     )
 
@@ -1070,8 +1070,8 @@ def main() -> None:
         options=("all", "red", "green"),
         format_func=lambda value: {
             "all": f"All tests ({counts['total']})",
-            "red": f"Needs attention ({counts['failed']})",
-            "green": f"Resisted ({counts['passed']})",
+            "red": f"Needs improvement ({counts['failed']})",
+            "green": f"Passed ({counts['passed']})",
         }[value],
         horizontal=True,
         label_visibility="collapsed",
@@ -1091,9 +1091,9 @@ def main() -> None:
 
     st.divider()
     st.markdown(
-        '<div class="sentinel-note"><strong>Read-only report.</strong> Source: '
+        '<div class="sentinel-note"><strong>Read-only QA report.</strong> Source: '
         '<code>run_results.json</code>. Refresh reads the latest saved assessment; '
-        'it never launches the vulnerable agent or starts a new security test.</div>',
+        'it never launches the QA fixture or starts a new evaluation.</div>',
         unsafe_allow_html=True,
     )
 

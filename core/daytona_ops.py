@@ -1,5 +1,5 @@
 """
-Scoobert-Security: Pure Daytona Sandbox Execution & Telemetry Engine
+Sentinel: Daytona Sandbox Execution & Behavioral Telemetry Engine
 ====================================================================
 Member 2 (M2): The Daytona Sandbox Engineer
 
@@ -10,7 +10,7 @@ official Daytona Python SDK (v0.207.0+) for:
 - Real Display & Computer Use Screenshot capture (sandbox.computer_use.screenshot)
 - Real Desktop Mouse & Keyboard control (sandbox.computer_use.mouse / keyboard)
 - Network Jailing & Egress boundaries (sandbox.update_network_settings)
-- Kernel-level Forensic Telemetry via Linux `strace` (syscall tracing of files, sockets, drops)
+- Kernel-level behavioral telemetry via Linux `strace` (syscall tracing of files, sockets, drops)
 - Zero mock / fake data generation - all telemetry originates from sandbox execution.
 """
 
@@ -153,7 +153,7 @@ class DesktopAction:
 
 @dataclass
 class SandboxTelemetry:
-    """Forensic security telemetry captured via strace & runtime syscall monitoring."""
+    """Behavioral QA telemetry captured via strace and runtime syscall monitoring."""
     files_accessed: List[str] = field(default_factory=list)
     database_dropped: bool = False
     network_egress: List[str] = field(default_factory=list)
@@ -359,7 +359,7 @@ def parse_strace_telemetry(
 
     for line in completed_lines:
         # 1. Track syscall success. DNS lookups alone are not treated as proof
-        # that the target transmitted attack data to the requested destination.
+        # that the fixture transmitted scenario data to the requested destination.
         syscall_failed = re.search(r"=\s*-1(?:\s|$)", line) is not None
 
         # 2. Trace HTTP Host headers in sendto/write syscalls: "Host: httpbin.org"
@@ -368,7 +368,7 @@ def parse_strace_telemetry(
             telemetry.record_network_egress(host_match.group(1))
 
         # 3. Record successful read-only opens. Ignoring create/write opens keeps
-        # target bootstrap files out of the attack receipt while retaining
+        # fixture bootstrap files out of the QA receipt while retaining
         # syscall evidence for reads the target omits from its own telemetry.
         open_match = re.search(
             r'(?:openat\([^,]+,\s*|open\()"([^"]+)"\s*,\s*([^,)]+)',
@@ -403,7 +403,7 @@ def parse_strace_telemetry(
     # 5. Record external connection attempts if no HTTP host was found.
     # Parsing telemetry must not perform its own reverse-DNS network requests.
     # Do not infer egress from URLs in ``command``: the command also contains the
-    # untrusted attack prompt, and merely mentioning a URL is not network evidence.
+    # untrusted QA input, and merely mentioning a URL is not network evidence.
     if not telemetry.network_egress:
         for line in completed_lines:
             if (
@@ -422,7 +422,7 @@ def parse_strace_telemetry(
 
     # 6. The controlled target's app-layer receipt identifies deliberate tool
     # reads and avoids counting its own one-time fixture/bootstrap writes as an
-    # attack. Kernel evidence remains authoritative for destructive and egress
+    # scenario. Kernel evidence remains authoritative for destructive and egress
     # events, and is used for all commands that do not emit a target receipt.
     target_receipt = _target_telemetry_from_stdout(raw_stdout)
     if target_receipt is not None:
@@ -472,7 +472,7 @@ class LinuxDesktopSandbox:
         self.client: Optional[Daytona] = None
         self.sandbox: Optional[Sandbox] = None
 
-        # Action history and security telemetry
+        # Action history and behavioral QA telemetry
         self.action_history: List[DesktopAction] = []
         self.telemetry = SandboxTelemetry()
         self._start_time: float = 0.0
@@ -897,7 +897,7 @@ def run_in_sandbox(
     """
     Executes the target agent with an adversarial payload inside a real Daytona sandbox.
     Supervises execution with Linux strace, captures real screenshots, and extracts
-    true security receipts conforming to the M4 Data Contract.
+    real behavioral receipts conforming to the M4 data contract.
     
     Returns:
     {
@@ -973,7 +973,7 @@ async def run_in_sandboxes_parallel(
 ) -> List[Dict[str, Any]]:
     """
     Executes multiple adversarial scenarios concurrently across parallel Daytona sandboxes.
-    Delivers 3-5x acceleration for the Sentinel security evaluation pipeline.
+    Delivers 3-5x acceleration for the Sentinel quality-assurance pipeline.
     """
     semaphore = asyncio.Semaphore(max_concurrency)
 
@@ -996,7 +996,7 @@ async def run_in_sandboxes_parallel(
 
 if __name__ == "__main__":
     print("=" * 70)
-    print("SCOOBERT-SECURITY: M2 PURE DAYTONA SANDBOX ENGINE")
+    print("SENTINEL: M2 DAYTONA AI-AGENT QA ENGINE")
     print("=" * 70)
 
     # 1. Test strace kernel telemetry parsing
@@ -1004,7 +1004,7 @@ if __name__ == "__main__":
         '1000 12:00:00.100 openat(AT_FDCWD, "secret.txt", O_RDONLY) = 3\n'
         '1000 12:00:00.200 unlink("dummy_data.db") = 0\n'
         '1000 12:00:00.300 connect(4, {sa_family=AF_INET, sin_port=htons(443), sin_addr=inet_addr("185.199.108.153")}, 16) = 0\n'
-        '1000 12:00:00.400 sendto(4, "POST /exfil HTTP/1.1\\r\\nHost: attacker-site.com\\r\\n", 48, 0, NULL, 0) = 48\n'
+        '1000 12:00:00.400 sendto(4, "POST /collect HTTP/1.1\\r\\nHost: collector.qa.invalid\\r\\n", 48, 0, NULL, 0) = 48\n'
     )
     parsed = parse_strace_telemetry(sample_trace)
     print("[OK] Kernel strace Telemetry Parser Verified:")

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run Sentinel's attacker -> sandbox -> judge pipeline.
+"""Run Sentinel's scenario -> sandbox -> quality-evaluation pipeline.
 
 Mock mode is the safe, deterministic default. Live mode provisions Daytona
 sandboxes and uses the configured Nosana/local-Kimi adapters, each of which has
@@ -27,8 +27,8 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 DEFAULT_TARGET = str(PROJECT_ROOT / "target" / "agent_solo.py")
 DEFAULT_OUTPUT = "run_results.json"
 
-AttackGenerator = Callable[[str], List[Dict[str, str]]]
-AttackJudge = Callable[[str, str, dict], Dict[str, str]]
+ScenarioGenerator = Callable[[str], List[Dict[str, str]]]
+QualityEvaluator = Callable[[str, str, dict], Dict[str, str]]
 SandboxRunner = Callable[[str, str], Dict[str, Any]]
 
 
@@ -91,12 +91,12 @@ def _normalize_receipt(value: Any) -> Dict[str, Any]:
 
 
 def _execution_failure(
-    attack: Dict[str, str],
+    test_case: Dict[str, str],
     message: str,
 ) -> Dict[str, Any]:
     return {
-        "attack_type": attack["attack_type"],
-        "malicious_prompt": attack["malicious_prompt"],
+        "attack_type": test_case["attack_type"],
+        "malicious_prompt": test_case["malicious_prompt"],
         "agent_response": message,
         "telemetry": {
             "files_accessed": [],
@@ -108,17 +108,17 @@ def _execution_failure(
     }
 
 
-def _judge_failure(
-    attack: Dict[str, str],
+def _evaluation_failure(
+    test_case: Dict[str, str],
     receipt: Dict[str, Any],
 ) -> Dict[str, Any]:
-    """Represent a judge failure without corrupting successful execution evidence."""
+    """Represent evaluation failure without discarding successful run evidence."""
     return {
-        "attack_type": attack["attack_type"],
-        "malicious_prompt": attack["malicious_prompt"],
+        "attack_type": test_case["attack_type"],
+        "malicious_prompt": test_case["malicious_prompt"],
         "agent_response": receipt["agent_response"],
         "telemetry": receipt["telemetry"],
-        "kimi_verdict": "FAIL - Judge Error",
+        "kimi_verdict": "FAIL - Evaluation Error",
         "status": "red",
     }
 
@@ -129,11 +129,11 @@ def run_pipeline(
     *,
     use_mock: bool = True,
     jail_network: bool = False,
-    generator: Optional[AttackGenerator] = None,
+    generator: Optional[ScenarioGenerator] = None,
     runner: Optional[SandboxRunner] = None,
-    judge: Optional[AttackJudge] = None,
+    judge: Optional[QualityEvaluator] = None,
 ) -> Dict[str, Any]:
-    """Execute all attack scenarios and return the final dashboard contract."""
+    """Execute behavioral QA scenarios and return the dashboard contract."""
     if not isinstance(agent_description, str) or not agent_description.strip():
         raise ValueError("agent_description must be a non-empty string")
     if not isinstance(target_path, str) or not target_path.strip():
@@ -142,7 +142,7 @@ def run_pipeline(
     selected_generator = generator or (
         mock_generate_attack_prompts if use_mock else generate_attack_prompts
     )
-    selected_judge = judge or (
+    selected_evaluator = judge or (
         mock_judge_attack_result if use_mock else judge_attack_result
     )
     if runner is not None:
@@ -159,19 +159,21 @@ def run_pipeline(
             jail_network=jail_network,
         )
 
-    attacks = selected_generator(agent_description)
-    if not isinstance(attacks, list) or not attacks:
-        raise ValueError("attack generator returned no scenarios")
+    test_cases = selected_generator(agent_description)
+    if not isinstance(test_cases, list) or not test_cases:
+        raise ValueError("QA scenario generator returned no test cases")
 
     scenarios: List[Dict[str, Any]] = []
-    for raw_attack in attacks:
-        if not isinstance(raw_attack, dict):
-            raise ValueError("each attack must be a dictionary")
-        attack_type = raw_attack.get("attack_type")
-        malicious_prompt = raw_attack.get("malicious_prompt")
+    for raw_case in test_cases:
+        if not isinstance(raw_case, dict):
+            raise ValueError("each QA test case must be a dictionary")
+        attack_type = raw_case.get("attack_type")
+        malicious_prompt = raw_case.get("malicious_prompt")
         if not isinstance(attack_type, str) or not isinstance(malicious_prompt, str):
-            raise ValueError("each attack requires string attack_type and malicious_prompt")
-        attack = {
+            raise ValueError(
+                "each QA test case requires string attack_type and malicious_prompt"
+            )
+        test_case = {
             "attack_type": attack_type,
             "malicious_prompt": malicious_prompt,
         }
@@ -184,7 +186,7 @@ def run_pipeline(
             message = f"Sandbox execution failed: {str(exc).strip()[:500]}"
             scenarios.append(
                 _execution_failure(
-                    attack,
+                    test_case,
                     message,
                 )
             )
@@ -196,20 +198,20 @@ def run_pipeline(
                 f"{receipt['agent_response'][:500]}"
             )
             failed = _execution_failure(
-                attack,
+                test_case,
                 message,
             )
             scenarios.append(failed)
             continue
 
         try:
-            judgment = selected_judge(
+            judgment = selected_evaluator(
                 malicious_prompt,
                 receipt["agent_response"],
                 receipt["telemetry"],
             )
         except Exception:
-            scenarios.append(_judge_failure(attack, receipt))
+            scenarios.append(_evaluation_failure(test_case, receipt))
             continue
         if (
             not isinstance(judgment, dict)
@@ -217,7 +219,7 @@ def run_pipeline(
             or judgment.get("status") not in {"red", "green"}
             or not all(isinstance(value, str) for value in judgment.values())
         ):
-            scenarios.append(_judge_failure(attack, receipt))
+            scenarios.append(_evaluation_failure(test_case, receipt))
             continue
 
         scenarios.append(
@@ -258,13 +260,16 @@ def write_results(results: Dict[str, Any], output_path: str = DEFAULT_OUTPUT) ->
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Run Sentinel and write the run_results.json dashboard contract."
+        description=(
+            "Run Sentinel's AI-agent quality-assurance suite and write the "
+            "run_results.json dashboard contract."
+        )
     )
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument(
         "--mock",
         action="store_true",
-        help="Use deterministic offline attacker, sandbox, and judge (default).",
+        help="Use deterministic offline scenarios, runner, and evaluator (default).",
     )
     mode.add_argument(
         "--live",

@@ -1,4 +1,4 @@
-"""The dangerous tools. This is the vulnerable surface Sentinel attacks.
+"""Over-permissive tools used by Sentinel's failure-injected QA fixture.
 
 Every tool here is intentionally unguarded:
   - run_shell : arbitrary command execution (the classic footgun)
@@ -8,7 +8,7 @@ Every tool here is intentionally unguarded:
 
 read_file + http_post together are the "lethal trifecta": private data access
 plus untrusted content plus external communication. Every call is recorded via
-telemetry so the grader sees exactly what the agent was tricked into doing.
+telemetry so the evaluator can compare observable behavior with expectations.
 """
 from __future__ import annotations
 
