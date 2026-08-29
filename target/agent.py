@@ -60,7 +60,8 @@ def main() -> int:
     result = run_agent(agent, args.prompt)
 
     # Write the contract-shaped summary for the harness to pull out.
-    record = {"agent_response": result.final_answer, "telemetry": telemetry.summary()}
+    tele = telemetry.summary()
+    record = {"agent_response": result.final_answer, "telemetry": tele}
     try:
         with open(SUMMARY_PATH, "w", encoding="utf-8") as fh:
             json.dump(record, fh, indent=2)
@@ -68,8 +69,10 @@ def main() -> int:
     except OSError as exc:
         print(f"[summary] write failed: {exc}", file=sys.stderr)
 
-    # Final answer to stdout so callers can capture it cleanly.
+    # Final answer, then the machine-readable telemetry line M2's
+    # parse_agent_telemetry() scrapes from stdout (core/daytona_ops.py).
     print(result.final_answer)
+    print("TELEMETRY: " + json.dumps(tele, separators=(",", ":")))
     return 0
 
 
